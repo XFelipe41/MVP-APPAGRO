@@ -1,19 +1,23 @@
 
+import RadarChart from "@/components/RadarChart";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { INDICATORS } from "@/constants/questions";
 import { Diagnosis } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { RadarChart } from "@salmonco/react-native-radar-chart";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Dimensions,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+
+// Get screen width for responsive chart size
+const screenWidth = Dimensions.get('window').width;
 
 export default function DiagnosisResultScreen() {
   const { id } = useLocalSearchParams();
@@ -54,13 +58,31 @@ export default function DiagnosisResultScreen() {
     );
   }
 
+  // --- Data Processing for Chart and Summary ---
+
+  // 1. Process data for the new Radar Chart (all indicators)
+  const scaleIndicators = INDICATORS.filter(i => i.type === 'scale');
+  
+  const chartLabels = scaleIndicators.map(i => i.question);
+  const chartData = scaleIndicators.map(indicator => {
+    const answer = diagnosis.answers.find(a => a.indicatorId === indicator.id);
+    // Ensure value is a number and within the 0-4 scale
+    const value = answer?.value ?? 0;
+    return typeof value === 'number' ? Math.max(0, Math.min(4, value)) : 0;
+  });
+
+  // 2. Calculate dimension averages for the summary text
   const getDimensionAverages = () => {
     const dimensions: { [key in 'Técnica' | 'Ecológica' | 'Social']: number[] } = { Técnica: [], Ecológica: [], Social: [] };
 
     diagnosis.answers.forEach((answer) => {
       const indicator = INDICATORS.find((i) => i.id === answer.indicatorId);
       if (indicator && indicator.type === "scale") {
-        dimensions[indicator.dimension].push(answer.value as number);
+        // Ensure value is a number before pushing
+        const value = typeof answer.value === 'number' ? answer.value : parseFloat(answer.value as string);
+        if (!isNaN(value)) {
+            dimensions[indicator.dimension].push(value);
+        }
       }
     });
 
@@ -74,30 +96,6 @@ export default function DiagnosisResultScreen() {
   };
 
   const averages = getDimensionAverages();
-  const data = [
-    {
-      label: "Técnica",
-      value: averages.Técnica / 4,
-      meta: { color: "#4CAF50" },
-    },
-    {
-      label: "Ecológica",
-      value: averages.Ecológica / 4,
-      meta: { color: "#4CAF50" },
-    },
-    {
-      label: "Social",
-      value: averages.Social / 4,
-      meta: { color: "#4CAF50" },
-    },
-  ];
-
-  const captions = {
-    tecnica: "Técnica",
-    ecologica: "Ecológica",
-    social: "Social",
-  };
-
   const dimensionKeys: Array<keyof typeof averages> = ["Técnica", "Ecológica", "Social"];
   const strongestDimension = dimensionKeys.reduce((a, b) =>
     averages[a] > averages[b] ? a : b
@@ -106,18 +104,22 @@ export default function DiagnosisResultScreen() {
   return (
     <ScrollView style={styles.scrollContainer}>
       <ThemedView style={styles.container}>
-        <ThemedText type="title" style={styles.title}>Resultados</ThemedText>
+        <ThemedText type="title" style={styles.title}>Resultados del Diagnóstico</ThemedText>
         
         <View style={styles.chartContainer}>
-          <RadarChart data={data} size={300} />
+          <RadarChart
+            datasets={[{ data: chartData, color: '#6a1b9a', name: 'Diagnóstico' }]}
+            labels={chartLabels}
+            size={screenWidth - 20} // Responsive size
+          />
         </View>
 
         <View style={styles.summaryContainer}>
             <ThemedText style={styles.summaryText}>
                 La dimensión con mayor fortaleza es la 
-                <ThemedText style={styles.strongestDimensionText}>{strongestDimension}</ThemedText> 
+                <ThemedText style={styles.strongestDimensionText}> {strongestDimension} </ThemedText> 
                 con un promedio de 
-                <ThemedText style={styles.strongestDimensionText}>{averages[strongestDimension].toFixed(1)}</ThemedText>.
+                <ThemedText style={styles.strongestDimensionText}> {averages[strongestDimension].toFixed(1)}</ThemedText>.
             </ThemedText>
         </View>
 

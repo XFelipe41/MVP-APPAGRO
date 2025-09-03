@@ -1,6 +1,7 @@
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { Colors } from "@/constants/Colors";
 import { INDICATORS } from "@/constants/questions";
 import { Answer, Diagnosis } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -39,6 +40,19 @@ export default function NewDiagnosisScreen() {
       })
     );
 
+    // Ensure all scale questions are answered before saving
+    const scaleQuestions = INDICATORS.filter(i => i.type === 'scale');
+    const answeredScaleQuestions = finalAnswers.filter(a => {
+        const indicator = INDICATORS.find(i => i.id === a.indicatorId);
+        // Check that a value was actually entered (not just an empty string from a text input that was cleared)
+        return indicator && indicator.type === 'scale' && a.value !== undefined;
+    });
+
+    if (answeredScaleQuestions.length < scaleQuestions.length) {
+        Alert.alert("Formulario Incompleto", "Por favor, responde todas las preguntas de escala (0-4) antes de guardar.");
+        return;
+    }
+
     const diagnosis: Diagnosis = {
       id: diagnosisId,
       date: new Date().toISOString(),
@@ -73,7 +87,7 @@ export default function NewDiagnosisScreen() {
           <TextInput
             style={styles.textInput}
             placeholder="Escribe tu respuesta aquí..."
-            placeholderTextColor="#999"
+            placeholderTextColor={Colors.dark.secondary}
             onChangeText={(text) => handleAnswer(indicator.id, text)}
             value={answers.get(indicator.id) as string}
           />
@@ -114,7 +128,7 @@ export default function NewDiagnosisScreen() {
               style={[styles.button, styles.saveButton]}
               onPress={saveDiagnosis}
             >
-              <ThemedText style={styles.buttonText}>
+              <ThemedText style={[styles.buttonText, styles.saveButtonText]}>
                 Guardar Diagnóstico
               </ThemedText>
             </TouchableOpacity>
@@ -160,15 +174,16 @@ const ButtonGroup = ({
 const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: Colors.dark.background,
   },
   container: {
     padding: 20,
+    backgroundColor: Colors.dark.background,
   },
   dimensionTitle: {
     fontSize: 22,
     fontWeight: "bold",
-    color: "#2d5a31",
+    color: Colors.dark.text,
     marginBottom: 20,
     textAlign: "center",
   },
@@ -177,62 +192,70 @@ const styles = StyleSheet.create({
   },
   questionText: {
     fontSize: 16,
-    marginBottom: 10,
-    color: "#333",
+    marginBottom: 15,
+    color: Colors.dark.text,
+    lineHeight: 22,
   },
   buttonGroup: {
     flexDirection: "row",
     justifyContent: "space-between",
   },
   scaleButton: {
-    width: 50,
+    flex: 1,
+    marginHorizontal: 4,
     height: 50,
-    borderRadius: 25,
+    borderRadius: 8, // Bordes redondeados
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
-    borderWidth: 2,
-    borderColor: "#4CAF50",
+    backgroundColor: Colors.dark.buttonDefaultBg,
+    borderWidth: 1,
+    borderColor: Colors.dark.buttonBorder, // Borde verde
   },
   selectedButton: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: Colors.dark.buttonSelectedBg, // Fondo verde al seleccionar
   },
   scaleButtonText: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#4CAF50",
+    color: Colors.dark.buttonDefaultText, // Texto claro
   },
   selectedButtonText: {
-    color: "#fff",
+    color: Colors.dark.buttonSelectedText, // Texto blanco al seleccionar
   },
   textInput: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: Colors.dark.secondary,
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.dark.background,
+    color: Colors.dark.text,
   },
   navigationButtons: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     marginTop: 30,
   },
   button: {
     paddingVertical: 12,
-    paddingHorizontal: 25,
+    paddingHorizontal: 20,
     borderRadius: 8,
     alignItems: "center",
+    flex: 1,
+    marginHorizontal: 5,
   },
   navButton: {
-    backgroundColor: "#6c757d",
+    backgroundColor: Colors.dark.secondary,
   },
   saveButton: {
-    backgroundColor: "#28a745",
+    backgroundColor: Colors.dark.primary,
   },
   buttonText: {
-    color: "white",
+    color: Colors.dark.text,
     fontSize: 16,
     fontWeight: "bold",
   },
+  saveButtonText: {
+      color: '#FFFFFF',
+  }
 });

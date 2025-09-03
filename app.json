@@ -16,6 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.mvpappagro.app",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -37,6 +38,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "2d14c260-2570-4f1e-b0ec-5bc3e922e0b6"
+      }
     }
   }
 }

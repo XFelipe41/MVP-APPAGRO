@@ -108,7 +108,7 @@ export default function DiagnosisResultScreen() {
         
         <View style={styles.chartContainer}>
           <RadarChart
-            datasets={[{ data: chartData, color: '#6a1b9a', name: 'Diagnóstico' }]}
+            datasets={[{ data: chartData, color: '#9347c3ff', name: 'Diagnóstico' }]}
             labels={chartLabels}
             size={screenWidth - 20} // Responsive size
           />
@@ -145,76 +145,85 @@ export default function DiagnosisResultScreen() {
   );
 }
 
+import { Colors } from '@/constants/Colors';
+
 const styles = StyleSheet.create({
-    scrollContainer: {
-        flex: 1,
-        backgroundColor: "#f5f5f5",
-    },
-    container: {
-        padding: 20,
-    },
-    centeredContainer: {
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-    },
-    title: {
-        textAlign: 'center',
-        marginBottom: 20,
-        color: '#2d5a31'
-    },
-    chartContainer: {
-        alignItems: 'center',
-        marginBottom: 30,
-    },
-    summaryContainer: {
-        padding: 15,
-        backgroundColor: '#e8f5e9',
-        borderRadius: 8,
-        marginBottom: 30,
-    },
-    summaryText: {
-        fontSize: 16,
-        textAlign: 'center',
-        lineHeight: 24,
-    },
-    strongestDimensionText: {
-        fontWeight: 'bold',
-        color: '#2e7d32'
-    },
-    tableTitle: {
-        color: '#2d5a31',
-        marginBottom: 15,
-    },
-    table: {
-        borderWidth: 1,
-        borderColor: '#ddd',
-        borderRadius: 8,
-        backgroundColor: '#fff',
-        overflow: 'hidden'
-    },
-    tableHeader: {
-        flexDirection: 'row',
-        backgroundColor: '#f1f8e9',
-        paddingVertical: 10,
-        paddingHorizontal: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ddd'
-    },
-    headerText: {
-        flex: 1,
-        fontWeight: 'bold',
-        fontSize: 15
-    },
-    tableRow: {
-        flexDirection: 'row',
-        paddingVertical: 10,
-        paddingHorizontal: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#eee'
-    },
-    cellText: {
-        flex: 1,
-        fontSize: 14
-    }
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: Colors.dark.background,
+  },
+  container: {
+    padding: 20,
+  },
+  centeredContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.dark.background,
+  },
+  title: {
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#4CAF50',
+  },
+  chartContainer: {
+    alignItems: 'center',
+    marginBottom: 30,
+  },
+  summaryContainer: {
+    padding: 15,
+    backgroundColor: Colors.dark.secondary,
+    borderRadius: 8,
+    marginBottom: 30,
+  },
+  summaryText: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
+    color: Colors.dark.text,
+  },
+  strongestDimensionText: {
+    fontWeight: 'bold',
+    color: Colors.dark.tint,
+  },
+  tableTitle: {
+    color: '#4CAF50',
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 20,
+    
+  },
+  table: {
+    borderWidth: 1,
+    borderColor: Colors.dark.secondary,
+    borderRadius: 8,
+    backgroundColor: '#1C2541', // Un poco más claro que el fondo
+    overflow: 'hidden',
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: Colors.dark.secondary,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dark.background,
+  },
+  headerText: {
+    flex: 1,
+    fontWeight: 'bold',
+    fontSize: 15,
+    color: Colors.dark.text,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.dark.secondary,
+  },
+  cellText: {
+    flex: 1,
+    fontSize: 14,
+    color: Colors.dark.text,
+  },
 });

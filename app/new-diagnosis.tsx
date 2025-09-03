@@ -8,12 +8,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  ScrollView,
-  View,
   Alert,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 const DIMENSIONS = ["Técnica", "Ecológica", "Social"];
@@ -254,6 +254,7 @@ const styles = StyleSheet.create({
     color: Colors.dark.text,
     fontSize: 16,
     fontWeight: "bold",
+    textAlign: "center",
   },
   saveButtonText: {
       color: '#FFFFFF',

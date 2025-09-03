@@ -5,16 +5,21 @@ import { ThemedView } from "@/components/ThemedView";
 import { INDICATORS } from "@/constants/questions";
 import { Diagnosis } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Print from 'expo-print';
 import { useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
+import * as Sharing from 'expo-sharing';
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Button,
   Dimensions,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from "react-native";
+import ViewShot from "react-native-view-shot";
 
 // Get screen width for responsive chart size
 const screenWidth = Dimensions.get('window').width;
@@ -23,6 +28,7 @@ export default function DiagnosisResultScreen() {
   const { id } = useLocalSearchParams();
   const [diagnosis, setDiagnosis] = useState<Diagnosis | null>(null);
   const [loading, setLoading] = useState(true);
+  const chartViewShotRef = useRef<ViewShot>(null);
 
   useEffect(() => {
     const fetchDiagnosis = async () => {
@@ -41,6 +47,77 @@ export default function DiagnosisResultScreen() {
 
     fetchDiagnosis();
   }, [id]);
+
+  const createPDFHTML = (chartImage: string, averages: any, strongestDimension: string) => {
+    const tableRows = diagnosis?.answers.map(ans => {
+        const indicator = INDICATORS.find(i => i.id === ans.indicatorId);
+        return `<tr><td>${indicator?.question || 'N/A'}</td><td>${ans.value}</td></tr>`;
+    }).join('');
+
+    return `
+      <html>
+        <head>
+          <style>
+            body { font-family: Helvetica, Arial, sans-serif; margin: 40px; color: #333; }
+            h1 { text-align: center; color: #4CAF50; }
+            .chart { display: flex; justify-content: center; margin: 40px 0; }
+            img { width: 80%; height: auto; }
+            .summary { background-color: #f2f2f2; padding: 20px; border-radius: 8px; text-align: center; font-size: 16px; margin-bottom: 30px; }
+            .summary b { color: #4CAF50; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+            th { background-color: #4CAF50; color: white; }
+            tr:nth-child(even) { background-color: #f2f2f2; }
+          </style>
+        </head>
+        <body>
+          <h1>Resultados del Diagnóstico Agroecológico</h1>
+          
+          <div class="chart">
+            <img src="data:image/png;base64,${chartImage}" />
+          </div>
+
+          <div class="summary">
+            La dimensión con mayor fortaleza es la <b>${strongestDimension}</b> 
+            con un promedio de <b>${averages[strongestDimension].toFixed(1)}</b>.
+          </div>
+
+          <h2>Tabla de Respuestas</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Indicador</th>
+                <th>Respuesta</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${tableRows}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+  };
+
+  const handleDownload = async () => {
+    if (chartViewShotRef.current?.capture) {
+        chartViewShotRef.current.capture().then(async (base64) => {
+            try {
+                const html = createPDFHTML(base64, averages, strongestDimension);
+                const { uri } = await Print.printToFileAsync({ html });
+
+                await Sharing.shareAsync(uri, {
+                    mimeType: 'application/pdf',
+                    dialogTitle: 'Descargar Diagnóstico',
+                });
+
+            } catch (error) {
+              console.error("Failed to generate PDF:", error);
+              Alert.alert('Error', 'Failed to generate PDF.');
+            }
+        });
+    }
+  };
 
   if (loading) {
     return (
@@ -63,7 +140,7 @@ export default function DiagnosisResultScreen() {
   // 1. Process data for the new Radar Chart (all indicators)
   const scaleIndicators = INDICATORS.filter(i => i.type === 'scale');
   
-  const chartLabels = scaleIndicators.map(i => i.question);
+  const chartLabels = scaleIndicators.map(i => ({ question: i.question, dimension: i.dimension }));
   const chartData = scaleIndicators.map(indicator => {
     const answer = diagnosis.answers.find(a => a.indicatorId === indicator.id);
     // Ensure value is a number and within the 0-4 scale
@@ -102,46 +179,53 @@ export default function DiagnosisResultScreen() {
   );
 
   return (
-    <ScrollView style={styles.scrollContainer}>
-      <ThemedView style={styles.container}>
-        <ThemedText type="title" style={styles.title}>Resultados del Diagnóstico</ThemedText>
-        
-        <View style={styles.chartContainer}>
-          <RadarChart
-            datasets={[{ data: chartData, color: '#9347c3ff', name: 'Diagnóstico' }]}
-            labels={chartLabels}
-            size={screenWidth - 20} // Responsive size
-          />
-        </View>
-
-        <View style={styles.summaryContainer}>
-            <ThemedText style={styles.summaryText}>
-                La dimensión con mayor fortaleza es la 
-                <ThemedText style={styles.strongestDimensionText}> {strongestDimension} </ThemedText> 
-                con un promedio de 
-                <ThemedText style={styles.strongestDimensionText}> {averages[strongestDimension].toFixed(1)}</ThemedText>.
-            </ThemedText>
-        </View>
-
-        <ThemedText type="subtitle" style={styles.tableTitle}>Tabla de Respuestas</ThemedText>
-        <View style={styles.table}>
-            <View style={styles.tableHeader}>
-                <Text style={styles.headerText}>Indicador</Text>
-                <Text style={styles.headerText}>Respuesta</Text>
-            </View>
-            {diagnosis.answers.map(ans => {
-                const indicator = INDICATORS.find(i => i.id === ans.indicatorId);
-                return (
-                    <View key={ans.indicatorId} style={styles.tableRow}>
-                        <Text style={styles.cellText}>{indicator?.question || 'N/A'}</Text>
-                        <Text style={styles.cellText}>{ans.value}</Text>
+    <View style={{flex: 1}}>
+        <ScrollView style={styles.scrollContainer}>
+            <ThemedView style={styles.container}>
+                <ThemedText type="title" style={styles.title}>Resultados del Diagnóstico</ThemedText>
+                
+                <ViewShot ref={chartViewShotRef} options={{ format: 'png', quality: 1, result: 'base64' }}>
+                    <View style={[styles.chartContainer, { backgroundColor: Colors.dark.background }]}>
+                        <RadarChart
+                            datasets={[{ data: chartData, color: '#9347c3ff', name: 'Diagnóstico' }]}
+                            labels={chartLabels}
+                            size={screenWidth - 20} // Responsive size
+                        />
                     </View>
-                )
-            })}
-        </View>
+                </ViewShot>
 
-      </ThemedView>
-    </ScrollView>
+                <View style={styles.summaryContainer}>
+                    <ThemedText style={styles.summaryText}>
+                        La dimensión con mayor fortaleza es la 
+                        <ThemedText style={styles.strongestDimensionText}> {strongestDimension} </ThemedText> 
+                        con un promedio de 
+                        <ThemedText style={styles.strongestDimensionText}> {averages[strongestDimension].toFixed(1)}</ThemedText>.
+                    </ThemedText>
+                </View>
+
+                <ThemedText type="subtitle" style={styles.tableTitle}>Tabla de Respuestas</ThemedText>
+                <View style={styles.table}>
+                    <View style={styles.tableHeader}>
+                        <Text style={styles.headerText}>Indicador</Text>
+                        <Text style={styles.headerText}>Respuesta</Text>
+                    </View>
+                    {diagnosis.answers.map(ans => {
+                        const indicator = INDICATORS.find(i => i.id === ans.indicatorId);
+                        return (
+                            <View key={ans.indicatorId} style={styles.tableRow}>
+                                <Text style={styles.cellText}>{indicator?.question || 'N/A'}</Text>
+                                <Text style={styles.cellText}>{ans.value}</Text>
+                            </View>
+                        )
+                    })}
+                </View>
+
+            </ThemedView>
+        </ScrollView>
+        <View style={styles.downloadButtonContainer}>
+            <Button title="Descargar PDF" onPress={handleDownload} color="#4CAF50" />
+        </View>
+    </View>
   );
 }
 
@@ -154,6 +238,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 20,
+    backgroundColor: Colors.dark.background, // Ensure background color is set for capture
   },
   centeredContainer: {
     flex: 1,
@@ -226,4 +311,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.dark.text,
   },
+  downloadButtonContainer: {
+    padding: 20,
+    backgroundColor: Colors.dark.background,
+  }
 });

@@ -2,10 +2,29 @@
 import { Colors } from '@/constants/Colors';
 import React from 'react';
 import { View, StyleSheet, Text } from 'react-native';
-import { Svg, G, Polygon, Line, Text as SvgText, Circle } from 'react-native-svg';
+import { Svg, G, Polygon, Line, Text as SvgText, Circle, TSpan } from 'react-native-svg';
 
 const FONT_SIZE = 10;
 const PADDING = 40;
+
+// Helper function to wrap text
+const wrapText = (text: string, maxChars: number): string[] => {
+    const words = text.split(' ');
+    const lines: string[] = [];
+    let currentLine = '';
+
+    words.forEach(word => {
+        if ((currentLine + word).length > maxChars) {
+            lines.push(currentLine.trim());
+            currentLine = word + ' ';
+        } else {
+            currentLine += word + ' ';
+        }
+    });
+    lines.push(currentLine.trim());
+    return lines;
+};
+
 
 interface RadarChartProps {
   datasets: {
@@ -13,19 +32,21 @@ interface RadarChartProps {
     color: string;
     name?: string;
   }[];
-  labels: string[];
+  labels: { question: string; dimension: string }[];
   size: number;
+  theme?: 'light' | 'dark';
 }
 
-const RadarChart: React.FC<RadarChartProps> = ({ datasets, labels, size }) => {
+const RadarChart: React.FC<RadarChartProps> = ({ datasets, labels, size, theme = 'dark' }) => {
   const radius = (size - PADDING * 2) / 2;
   const center = size / 2;
   const numAxes = labels.length;
   const angleSlice = (Math.PI * 2) / numAxes;
   const scale = 4; // Because indicator values are 0-4
 
-  const gridColor = Colors.dark.secondary;
-  const labelColor = Colors.dark.text;
+  const isLightTheme = theme === 'light';
+  const gridColor = isLightTheme ? Colors.light.secondary : Colors.dark.secondary;
+  const labelColor = isLightTheme ? Colors.light.text : Colors.dark.text;
 
   // 1. Calculate coordinates for axes and labels
   const axes = labels.map((label, i) => {
@@ -34,7 +55,7 @@ const RadarChart: React.FC<RadarChartProps> = ({ datasets, labels, size }) => {
     const y = center + radius * Math.sin(angle);
     const labelX = center + (radius + PADDING / 2) * Math.cos(angle);
     const labelY = center + (radius + PADDING / 2) * Math.sin(angle);
-    return { x, y, label, labelX, labelY };
+    return { x, y, label: label.question, labelX, labelY, dimension: label.dimension };
   });
 
   // 2. Draw the concentric grid levels (0-4)
@@ -81,6 +102,41 @@ const RadarChart: React.FC<RadarChartProps> = ({ datasets, labels, size }) => {
     );
   });
 
+  // 4. Group axes by dimension for labels
+  const dimensionGroups = labels.reduce((acc, label, i) => {
+    if (!acc[label.dimension]) {
+      acc[label.dimension] = [];
+    }
+    acc[label.dimension].push(i);
+    return acc;
+  }, {} as Record<string, number[]>);
+
+  const dimensionLabels = Object.keys(dimensionGroups).map(dimension => {
+    const indices = dimensionGroups[dimension];
+    const firstAngle = angleSlice * indices[0] - Math.PI / 2;
+    const lastAngle = angleSlice * indices[indices.length - 1] - Math.PI / 2;
+    const midAngle = (firstAngle + lastAngle) / 2;
+
+    const labelRadius = radius * 0.5; // Adjust this to position the labels inside the chart
+    const x = center + labelRadius * Math.cos(midAngle);
+    const y = center + labelRadius * Math.sin(midAngle);
+
+    return (
+      <SvgText
+        key={dimension}
+        x={x}
+        y={y}
+        fontSize={FONT_SIZE + 2}
+        fontWeight="bold"
+        fill={labelColor}
+        textAnchor="middle"
+        alignmentBaseline="middle"
+      >
+        {dimension}
+      </SvgText>
+    );
+  });
+
   return (
     <View style={styles.container}>
       <Svg height={size} width={size}>
@@ -94,20 +150,30 @@ const RadarChart: React.FC<RadarChartProps> = ({ datasets, labels, size }) => {
           {/* Data */}
           {dataPolygons}
 
+          {/* Dimension Labels */}
+          {dimensionLabels}
+
           {/* Labels */}
-          {axes.map((axis, i) => (
-            <SvgText
-              key={`label-${i}`}
-              x={axis.labelX}
-              y={axis.labelY}
-              fontSize={FONT_SIZE}
-              fill={labelColor}
-              textAnchor={axis.labelX > center ? 'start' : axis.labelX < center ? 'end' : 'middle'}
-              alignmentBaseline="middle"
-            >
-              {axis.label}
-            </SvgText>
-          ))}
+          {axes.map((axis, i) => {
+            const wrappedLabel = wrapText(axis.label, 15); // Wrap text at 15 chars
+            return (
+              <SvgText
+                key={`label-${i}`}
+                x={axis.labelX}
+                y={axis.labelY}
+                fontSize={FONT_SIZE}
+                fill={labelColor}
+                textAnchor={axis.labelX > center + 1 ? 'start' : axis.labelX < center - 1 ? 'end' : 'middle'}
+                alignmentBaseline="middle"
+              >
+                {wrappedLabel.map((line, lineIndex) => (
+                  <TSpan key={lineIndex} x={axis.labelX} dy={lineIndex === 0 ? 0 : FONT_SIZE + 2}>
+                    {line}
+                  </TSpan>
+                ))}
+              </SvgText>
+            );
+          })}
           
           {/* Scale Labels (0-4) */}
           {Array.from({ length: scale }).map((_, i) => {

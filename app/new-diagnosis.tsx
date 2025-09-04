@@ -1,4 +1,3 @@
-
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Colors } from "@/constants/Colors";
@@ -7,6 +6,7 @@ import { Answer, Diagnosis } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import React, { useState } from "react";
+import { useColorScheme } from "@/hooks/useColorScheme";
 import {
   Alert,
   ScrollView,
@@ -14,9 +14,105 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Text
 } from "react-native";
 
 const DIMENSIONS = ["Técnica", "Ecológica", "Social"];
+
+// We create a function that will generate the styles based on the color scheme.
+const getStyles = (colorScheme: 'light' | 'dark') => {
+  const theme = Colors[colorScheme];
+
+  return StyleSheet.create({
+    scrollContainer: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    container: {
+      padding: 20,
+      backgroundColor: theme.background,
+    },
+    dimensionTitle: {
+      fontSize: 22,
+      fontWeight: "bold",
+      color: theme.text,
+      marginBottom: 20,
+      textAlign: "center",
+    },
+    questionContainer: {
+      marginBottom: 25,
+    },
+    questionText: {
+      fontSize: 16,
+      marginBottom: 15,
+      color: theme.text,
+      lineHeight: 22,
+    },
+    buttonGroup: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    scaleButton: {
+      flex: 1,
+      marginHorizontal: 4,
+      height: 50,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: theme.buttonDefaultBg,
+      borderWidth: 1,
+      borderColor: theme.buttonBorder,
+    },
+    selectedButton: {
+      backgroundColor: theme.buttonSelectedBg,
+    },
+    scaleButtonText: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: theme.buttonDefaultText,
+    },
+    selectedButtonText: {
+      color: theme.buttonSelectedText,
+    },
+    textInput: {
+      borderWidth: 1,
+      borderColor: theme.secondary,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      backgroundColor: theme.background,
+      color: theme.text,
+    },
+    navigationButtons: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginTop: 30,
+    },
+    button: {
+      paddingVertical: 12,
+      paddingHorizontal: 20,
+      borderRadius: 8,
+      alignItems: "center",
+      flex: 1,
+      marginHorizontal: 5,
+    },
+    navButton: {
+      backgroundColor: theme.navButtonBg,
+    },
+    saveButton: {
+      backgroundColor: theme.primary,
+    },
+    buttonText: {
+      color: theme.navButtonText,
+      fontSize: 16,
+      fontWeight: "bold",
+      textAlign: "center",
+    },
+    saveButtonText: {
+        color: theme.buttonSelectedText,
+    }
+  });
+};
 
 export default function NewDiagnosisScreen() {
   const [currentDimensionIndex, setCurrentDimensionIndex] = useState(0);
@@ -24,6 +120,8 @@ export default function NewDiagnosisScreen() {
     new Map()
   );
   const router = useRouter();
+  const colorScheme = useColorScheme() || 'light'; // Fallback to light
+  const styles = getStyles(colorScheme);
 
   const handleAnswer = (indicatorId: string, value: number | string) => {
     const newAnswers = new Map(answers);
@@ -40,11 +138,9 @@ export default function NewDiagnosisScreen() {
       })
     );
 
-    // Ensure all scale questions are answered before saving
     const scaleQuestions = INDICATORS.filter(i => i.type === 'scale');
     const answeredScaleQuestions = finalAnswers.filter(a => {
         const indicator = INDICATORS.find(i => i.id === a.indicatorId);
-        // Check that a value was actually entered (not just an empty string from a text input that was cleared)
         return indicator && indicator.type === 'scale' && a.value !== undefined;
     });
 
@@ -69,6 +165,38 @@ export default function NewDiagnosisScreen() {
     }
   };
 
+  const ButtonGroup = ({
+    onSelect,
+    selectedValue,
+  }: {
+    onSelect: (value: number) => void;
+    selectedValue?: number;
+  }) => {
+    return (
+      <View style={styles.buttonGroup}>
+        {[0, 1, 2, 3, 4].map((value) => (
+          <TouchableOpacity
+            key={value}
+            style={[
+              styles.scaleButton,
+              selectedValue === value && styles.selectedButton,
+            ]}
+            onPress={() => onSelect(value)}
+          >
+            <Text
+              style={[
+                styles.scaleButtonText,
+                selectedValue === value && styles.selectedButtonText,
+              ]}
+            >
+              {value}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
+  };
+
   const renderQuestionsForCurrentDimension = () => {
     const currentDimension = DIMENSIONS[currentDimensionIndex];
     return INDICATORS.filter(
@@ -87,7 +215,7 @@ export default function NewDiagnosisScreen() {
           <TextInput
             style={styles.textInput}
             placeholder="Escribe tu respuesta aquí..."
-            placeholderTextColor={Colors.dark.secondary}
+            placeholderTextColor={Colors[colorScheme].secondary}
             onChangeText={(text) => handleAnswer(indicator.id, text)}
             value={answers.get(indicator.id) as string}
           />
@@ -138,125 +266,3 @@ export default function NewDiagnosisScreen() {
     </ScrollView>
   );
 }
-
-const ButtonGroup = ({
-  onSelect,
-  selectedValue,
-}: {
-  onSelect: (value: number) => void;
-  selectedValue?: number;
-}) => {
-  return (
-    <View style={styles.buttonGroup}>
-      {[0, 1, 2, 3, 4].map((value) => (
-        <TouchableOpacity
-          key={value}
-          style={[
-            styles.scaleButton,
-            selectedValue === value && styles.selectedButton,
-          ]}
-          onPress={() => onSelect(value)}
-        >
-          <ThemedText
-            style={[
-              styles.scaleButtonText,
-              selectedValue === value && styles.selectedButtonText,
-            ]}
-          >
-            {value}
-          </ThemedText>
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-};
-
-const styles = StyleSheet.create({
-  scrollContainer: {
-    flex: 1,
-    backgroundColor: Colors.dark.background,
-  },
-  container: {
-    padding: 20,
-    backgroundColor: Colors.dark.background,
-  },
-  dimensionTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: Colors.dark.text,
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  questionContainer: {
-    marginBottom: 25,
-  },
-  questionText: {
-    fontSize: 16,
-    marginBottom: 15,
-    color: Colors.dark.text,
-    lineHeight: 22,
-  },
-  buttonGroup: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  scaleButton: {
-    flex: 1,
-    marginHorizontal: 4,
-    height: 50,
-    borderRadius: 8, // Bordes redondeados
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: Colors.dark.buttonDefaultBg,
-    borderWidth: 1,
-    borderColor: Colors.dark.buttonBorder, // Borde verde
-  },
-  selectedButton: {
-    backgroundColor: Colors.dark.buttonSelectedBg, // Fondo verde al seleccionar
-  },
-  scaleButtonText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: Colors.dark.buttonDefaultText, // Texto claro
-  },
-  selectedButtonText: {
-    color: Colors.dark.buttonSelectedText, // Texto blanco al seleccionar
-  },
-  textInput: {
-    borderWidth: 1,
-    borderColor: Colors.dark.secondary,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: Colors.dark.background,
-    color: Colors.dark.text,
-  },
-  navigationButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 30,
-  },
-  button: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: "center",
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  navButton: {
-    backgroundColor: Colors.dark.secondary,
-  },
-  saveButton: {
-    backgroundColor: Colors.dark.primary,
-  },
-  buttonText: {
-    color: Colors.dark.text,
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
-  },
-  saveButtonText: {
-      color: '#FFFFFF',
-  }
-});

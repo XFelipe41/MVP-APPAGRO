@@ -1,8 +1,8 @@
 
 import { Colors } from '@/constants/Colors';
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
-import { Svg, G, Polygon, Line, Text as SvgText, Circle, TSpan } from 'react-native-svg';
+import { StyleSheet, Text, View } from 'react-native';
+import { Circle, G, Line, Polygon, Svg, Text as SvgText, TSpan } from 'react-native-svg';
 
 const FONT_SIZE = 10;
 const PADDING = 40;

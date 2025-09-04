@@ -1,8 +1,10 @@
 
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
+import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { Link } from "expo-router";
 import { ImageBackground, StyleSheet, TouchableOpacity, View } from "react-native";
+
 
 const backgroundImage = {
   uri: "https://plus.unsplash.com/premium_photo-1680322478065-f949f1a7b06f?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -16,6 +18,9 @@ export default function HomeScreen() {
           <ThemedText type="title" style={styles.title}>
             AppAgro Diagnóstico
           </ThemedText>
+        </View>
+        <View style={styles.themeButtonContainer}>
+          <ThemeToggleButton />
         </View>
         <View style={styles.bottomContainer}>
           <Link href="/new-diagnosis" asChild>
@@ -57,6 +62,12 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     marginBottom: 40, // Adjust as needed
+  },
+  themeButtonContainer: {
+    position: 'absolute',
+    top: 25,
+    right: 20,
+    zIndex: 1,
   },
   title: {
     color: "#4CAF50",

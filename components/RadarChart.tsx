@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Circle, G, Line, Polygon, Svg, Text as SvgText, TSpan } from 'react-native-svg';
 
 const FONT_SIZE = 10;
-const PADDING = 40;
+const PADDING = 54;
 
 // Helper function to wrap text
 const wrapText = (text: string, maxChars: number): string[] => {

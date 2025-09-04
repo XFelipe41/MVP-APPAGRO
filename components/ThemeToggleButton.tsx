@@ -1,9 +1,8 @@
-import React from 'react';
-import { Pressable, useColorScheme as useSystemColorScheme } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
+import { Pressable } from 'react-native';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useTheme } from '../context/ThemeContext';
-import { Colors } from '../constants/Colors';
 
 export function ThemeToggleButton() {
   const { colorScheme, toggleColorScheme } = useTheme();
@@ -22,7 +21,7 @@ export function ThemeToggleButton() {
   };
 
   const iconName = colorScheme === 'dark' ? 'moon' : 'sunny';
-  const iconColor = '#FFFFFF';
+  const iconColor = colorScheme === 'dark' ? '#000000ff' : '#000000ff'; // Gold color for sunny
 
   return (
     <Pressable onPress={handlePress}>

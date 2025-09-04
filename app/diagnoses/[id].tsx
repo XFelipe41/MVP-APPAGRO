@@ -120,12 +120,7 @@ const getStyles = (colorScheme: 'light' | 'dark') => {
       padding: 20,
       backgroundColor: theme.background,
     },
-    themeButtonContainer: {
-      position: 'absolute',
-      top: 40,
-      right: 20,
-      zIndex: 1,
-    },
+    
   });
 };
 
@@ -258,9 +253,6 @@ export default function DiagnosisResultScreen() {
 
   return (
     <View style={{flex: 1}}>
-      <View style={styles.themeButtonContainer}>
-        <ThemeToggleButton />
-      </View>
       <ScrollView style={styles.scrollContainer}>
         <ThemedView style={styles.container}>
           <View style={styles.headerContainer}>
@@ -307,6 +299,9 @@ export default function DiagnosisResultScreen() {
       </ScrollView>
       <View style={styles.downloadButtonContainer}>
         <Button title="Descargar PDF" onPress={handleDownload} color={themeColors.primary} />
+      </View>
+      <View style={styles.themeButtonContainer}>
+        <ThemeToggleButton />
       </View>
     </View>
   );

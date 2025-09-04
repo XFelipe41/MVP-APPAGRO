@@ -101,6 +101,7 @@ const getStyles = (colorScheme: 'light' | 'dark') => {
       fontWeight: 'bold',
       fontSize: 15,
       color: theme.tableHeaderText,
+      textAlign: 'center',
     },
     tableRow: {
       flexDirection: 'row',
@@ -113,6 +114,7 @@ const getStyles = (colorScheme: 'light' | 'dark') => {
       flex: 1,
       fontSize: 14,
       color: theme.tableRowText,
+      textAlign: 'center',
     },
     downloadButtonContainer: {
       padding: 20,

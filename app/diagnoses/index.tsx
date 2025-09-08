@@ -88,9 +88,14 @@ export default function DiagnosesListScreen() {
           <View style={styles.itemContainer}>
             <Link href={`/diagnoses/${item.id}`} asChild>
               <TouchableOpacity style={styles.itemLink}>
-                <ThemedText style={styles.itemText}>
-                  Diagnóstico del{" "}
-                  {new Date(item.date).toLocaleString("es-ES")}
+                <ThemedText style={styles.itemTitle}>{item.name}</ThemedText>
+                <ThemedText style={styles.itemDate}>
+                  {new Date(item.date).toLocaleDateString("es-ES", {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                  })}{' - '}
+                  {new Date(item.date).toLocaleTimeString("es-ES", {
+                    hour: '2-digit', minute: '2-digit'
+                  })}
                 </ThemedText>
               </TouchableOpacity>
             </Link>
@@ -129,9 +134,15 @@ const styles = StyleSheet.create({
   itemLink: {
     flex: 1,
   },
-  itemText: {
-    fontSize: 16,
+  itemTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
     color: "#333",
+    marginBottom: 5,
+  },
+  itemDate: {
+    fontSize: 14,
+    color: "#666",
   },
   deleteButton: {
     marginLeft: 15,

@@ -119,6 +119,20 @@ const getStyles = (colorScheme: 'light' | 'dark') => {
       padding: 20,
       backgroundColor: theme.background,
     },
+    locationContainer: {
+      marginBottom: 20,
+      alignItems: 'center',
+    },
+    locationTitle: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: theme.primary,
+      marginBottom: 10,
+    },
+    locationText: {
+      fontSize: 16,
+      color: theme.text,
+    },
     
   });
 };
@@ -255,9 +269,8 @@ export default function DiagnosisResultScreen() {
       <ScrollView style={styles.scrollContainer}>
         <ThemedView style={styles.container}>
           <View style={styles.headerContainer}>
-            <ThemedText type="title" style={styles.title}>Resultados del Diagnóstico</ThemedText>
+            <ThemedText type="title" style={styles.title}>Resultados del Diagnóstico: {diagnosis.name}</ThemedText>
           </View>
-          
           <ViewShot ref={chartViewShotRef} options={{ format: 'png', quality: 1, result: 'base64' }}>
             <View style={styles.chartContainer}>
               <RadarChart
@@ -277,6 +290,18 @@ export default function DiagnosisResultScreen() {
               <ThemedText style={styles.strongestDimensionText}> {averages[strongestDimension].toFixed(1)}</ThemedText>.
             </ThemedText>
           </View>
+
+          {diagnosis.location && (
+            <View style={styles.locationContainer}>
+              <ThemedText style={styles.locationTitle}>Ubicación Geográfica</ThemedText>
+              <ThemedText style={styles.locationText}>
+                Latitud: {diagnosis.location.latitude.toFixed(4)}
+              </ThemedText>
+              <ThemedText style={styles.locationText}>
+                Longitud: {diagnosis.location.longitude.toFixed(4)}
+              </ThemedText>
+            </View>
+          )}
 
           <ThemedText type="subtitle" style={styles.tableTitle}>Tabla de Respuestas</ThemedText>
           <View style={styles.table}>

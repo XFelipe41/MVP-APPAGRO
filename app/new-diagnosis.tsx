@@ -2,19 +2,20 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Colors } from "@/constants/Colors";
 import { INDICATORS } from "@/constants/questions";
+import { useColorScheme } from "@/hooks/useColorScheme";
 import { Answer, Diagnosis } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Location from "expo-location";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import React, { useEffect, useState } from "react";
 import {
   Alert,
   ScrollView,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Text
+  View
 } from "react-native";
 
 const DIMENSIONS = ["Técnica", "Ecológica", "Social"];
@@ -36,6 +37,7 @@ const getStyles = (colorScheme: 'light' | 'dark') => {
       fontSize: 22,
       fontWeight: "bold",
       color: theme.text,
+      marginTop: 20,
       marginBottom: 20,
       textAlign: "center",
     },
@@ -110,7 +112,13 @@ const getStyles = (colorScheme: 'light' | 'dark') => {
     },
     saveButtonText: {
         color: theme.buttonSelectedText,
-    }
+    },
+    inputLabel: {
+      fontSize: 16,
+      fontWeight: 'bold',
+      color: theme.text,
+      marginBottom: 10,
+    },
   });
 };
 
@@ -119,9 +127,29 @@ export default function NewDiagnosisScreen() {
   const [answers, setAnswers] = useState<Map<string, number | string>>(
     new Map()
   );
+  const [diagnosisName, setDiagnosisName] = useState("");
+  const [location, setLocation] = useState<Location.LocationObject | null>(
+    null
+  );
   const router = useRouter();
   const colorScheme = useColorScheme() || 'light'; // Fallback to light
   const styles = getStyles(colorScheme);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert(
+          "Permission to access location was denied",
+          "Please grant permission to access your location to save the diagnosis."
+        );
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setLocation(location);
+    })();
+  }, []);
 
   const handleAnswer = (indicatorId: string, value: number | string) => {
     const newAnswers = new Map(answers);
@@ -130,6 +158,21 @@ export default function NewDiagnosisScreen() {
   };
 
   const saveDiagnosis = async () => {
+    if (!diagnosisName.trim()) {
+      Alert.alert(
+        "Nombre Requerido",
+        "Por favor, ingresa un nombre para el diagnóstico."
+      );
+      return;
+    }
+    if (!location) {
+      Alert.alert(
+        "Ubicación no disponible",
+        "No se pudo obtener la ubicación. Por favor, asegúrate de tener los permisos de ubicación activados."
+      );
+      return;
+    }
+
     const diagnosisId = `diagnosis_${new Date().getTime()}`;
     const finalAnswers: Answer[] = Array.from(answers.entries()).map(
       ([indicatorId, value]) => ({
@@ -138,21 +181,29 @@ export default function NewDiagnosisScreen() {
       })
     );
 
-    const scaleQuestions = INDICATORS.filter(i => i.type === 'scale');
-    const answeredScaleQuestions = finalAnswers.filter(a => {
-        const indicator = INDICATORS.find(i => i.id === a.indicatorId);
-        return indicator && indicator.type === 'scale' && a.value !== undefined;
+    const scaleQuestions = INDICATORS.filter((i) => i.type === "scale");
+    const answeredScaleQuestions = finalAnswers.filter((a) => {
+      const indicator = INDICATORS.find((i) => i.id === a.indicatorId);
+      return indicator && indicator.type === "scale" && a.value !== undefined;
     });
 
     if (answeredScaleQuestions.length < scaleQuestions.length) {
-        Alert.alert("Formulario Incompleto", "Por favor, responde todas las preguntas de escala (0-4) antes de guardar.");
-        return;
+      Alert.alert(
+        "Formulario Incompleto",
+        "Por favor, responde todas las preguntas de escala (0-4) antes de guardar."
+      );
+      return;
     }
 
     const diagnosis: Diagnosis = {
       id: diagnosisId,
+      name: diagnosisName,
       date: new Date().toISOString(),
       answers: finalAnswers,
+      location: {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+      },
     };
 
     try {
@@ -227,6 +278,14 @@ export default function NewDiagnosisScreen() {
   return (
     <ScrollView style={styles.scrollContainer}>
       <ThemedView style={styles.container}>
+        <ThemedText style={styles.inputLabel}>Nombre del Diagnóstico</ThemedText>
+        <TextInput
+          style={styles.textInput}
+          placeholder="Ingresa un nombre para el diagnóstico"
+          placeholderTextColor={Colors[colorScheme].secondary}
+          value={diagnosisName}
+          onChangeText={setDiagnosisName}
+        />
         <ThemedText type="subtitle" style={styles.dimensionTitle}>
           Dimensión: {DIMENSIONS[currentDimensionIndex]}
         </ThemedText>

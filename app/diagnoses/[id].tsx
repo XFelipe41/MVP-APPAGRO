@@ -165,11 +165,13 @@ export default function DiagnosisResultScreen() {
     fetchDiagnosis();
   }, [id]);
 
-  const createPDFHTML = (chartImage: string, averages: any, strongestDimension: string) => {
+  const createPDFHTML = (chartImage: string, averages: any, strongestDimension: string, diagnosisName: string, latitude: number | undefined, longitude: number | undefined, currentDate: string, currentTime: string) => {
     const tableRows = diagnosis?.answers.map(ans => {
         const indicator = INDICATORS.find(i => i.id === ans.indicatorId);
         return `<tr><td>${indicator?.question || 'N/A'}</td><td>${ans.value}</td></tr>`;
     }).join('');
+
+    const locationHtml = latitude && longitude ? `<p><b>Ubicación:</b> Latitud ${latitude.toFixed(4)}, Longitud ${longitude.toFixed(4)}</p>` : '';
 
     return `
       <html>
@@ -177,6 +179,8 @@ export default function DiagnosisResultScreen() {
           <style>
             body { font-family: Helvetica, Arial, sans-serif; margin: 40px; color: #333; }
             h1 { text-align: center; color: #4CAF50; }
+            h2 { text-align: center; color: #4CAF50; }
+            p { text-align: center; margin-bottom: 5px; }
             .chart { display: flex; justify-content: center; margin: 40px 0; }
             img { width: 80%; height: auto; }
             .summary { background-color: #f2f2f2; padding: 20px; border-radius: 8px; text-align: center; font-size: 16px; margin-bottom: 30px; }
@@ -189,6 +193,10 @@ export default function DiagnosisResultScreen() {
         </head>
         <body>
           <h1>Resultados del Diagnóstico Agroecológico</h1>
+          <h2>${diagnosisName}</h2>
+          <p><b>Fecha:</b> ${currentDate}</p>
+          <p><b>Hora:</b> ${currentTime}</p>
+          ${locationHtml}
           <div class="chart"><img src="data:image/png;base64,${chartImage}" /></div>
           <div class="summary">
             La dimensión con mayor fortaleza es la <b>${strongestDimension}</b> 
@@ -203,12 +211,25 @@ export default function DiagnosisResultScreen() {
       </html>
     `;
   };
+  
 
   const handleDownload = async () => {
-    if (chartViewShotRef.current?.capture) {
+    if (chartViewShotRef.current?.capture && diagnosis) {
         try {
             const base64 = await chartViewShotRef.current.capture();
-            const html = createPDFHTML(base64, averages, strongestDimension);
+            const now = new Date();
+            const currentDate = now.toLocaleDateString('es-ES');
+            const currentTime = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+            const html = createPDFHTML(
+                base64,
+                averages,
+                strongestDimension,
+                diagnosis.name,
+                diagnosis.location?.latitude,
+                diagnosis.location?.longitude,
+                currentDate,
+                currentTime
+            );
             const { uri } = await Print.printToFileAsync({ html });
             await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Descargar Diagnóstico' });
         } catch (error) {
@@ -279,7 +300,7 @@ export default function DiagnosisResultScreen() {
                 datasets={[{ data: chartData, color: themeColors.chartLineColor, name: 'Diagnóstico' }]}
                 theme={colorScheme}
                 labels={chartLabels}
-                size={screenWidth - 40}
+                size={screenWidth - 20}
               />
             </View>
           </ViewShot>

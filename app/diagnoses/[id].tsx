@@ -2,7 +2,6 @@
 import RadarChart from "@/components/RadarChart";
 import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
-import { ThemeToggleButton } from "@/components/ThemeToggleButton";
 import { Colors } from '@/constants/Colors';
 import { INDICATORS } from "@/constants/questions";
 import { useColorScheme } from "@/hooks/useColorScheme";
@@ -299,9 +298,6 @@ export default function DiagnosisResultScreen() {
       </ScrollView>
       <View style={styles.downloadButtonContainer}>
         <Button title="Descargar PDF" onPress={handleDownload} color={themeColors.primary} />
-      </View>
-      <View style={styles.themeButtonContainer}>
-        <ThemeToggleButton />
       </View>
     </View>
   );

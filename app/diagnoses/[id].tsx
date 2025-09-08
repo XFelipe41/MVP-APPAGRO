@@ -4,6 +4,7 @@ import { ThemedText } from "@/components/ThemedText";
 import { ThemedView } from "@/components/ThemedView";
 import { Colors } from '@/constants/Colors';
 import { INDICATORS } from "@/constants/questions";
+import { SHORT_INDICATORS } from "@/constants/shortquestions";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { Diagnosis } from "@/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -234,7 +235,8 @@ export default function DiagnosisResultScreen() {
   }
 
   const scaleIndicators = INDICATORS.filter(i => i.type === 'scale');
-  const chartLabels = scaleIndicators.map(i => ({ question: i.question, dimension: i.dimension }));
+  const shortScaleIndicators = SHORT_INDICATORS.filter(i => i.type === 'scale');
+  const chartLabels = shortScaleIndicators.map(i => ({ question: i.question, dimension: i.dimension }));
   const chartData = scaleIndicators.map(indicator => {
     const answer = diagnosis.answers.find(a => a.indicatorId === indicator.id);
     const value = answer?.value ?? 0;

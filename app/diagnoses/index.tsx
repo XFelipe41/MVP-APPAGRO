@@ -94,7 +94,7 @@ export default function DiagnosesListScreen() {
                     year: 'numeric', month: 'long', day: 'numeric'
                   })}{' - '}
                   {new Date(item.date).toLocaleTimeString("es-ES", {
-                    hour: '2-digit', minute: '2-digit'
+                    hour: '2-digit', minute: '2-digit', hour12: true
                   })}
                 </ThemedText>
               </TouchableOpacity>
